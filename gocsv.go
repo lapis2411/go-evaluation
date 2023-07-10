@@ -42,8 +42,53 @@ func main() {
 	for _, v := range p {
 		fmt.Println(v)
 	}
+	fmt.Println("pattern 1 done")
+
+	// 処理が複雑な場合1
+	var p2 []Person
+	cp := ComplexProcess(&p2)
+	if err := gocsv.UnmarshalBytesToCallback([]byte(test), cp); err != nil {
+		log.Fatalln(err)
+	}
+	for _, v := range p2 {
+		fmt.Println(v)
+	}
+	fmt.Println("pattern 2 done")
+
+	// 処理が複雑な場合2
+	var p3 []Person
+	if err := gocsv.UnmarshalBytesToCallback([]byte(test), func(pc PersonCSV) {
+		ComplexProcess2(&p3, pc)
+	}); err != nil {
+		log.Fatalln(err)
+	}
+	for _, v := range p3 {
+		fmt.Println(v)
+	}
+	fmt.Println("pattern 3 done")
 }
 
 func (p Person) String() string {
 	return fmt.Sprintf("%s(%d) %s", p.Name, p.Age, p.Job)
+}
+
+// 処理が複雑な場合は関数を返すようにする
+func ComplexProcess(person *[]Person) func(PersonCSV) {
+	return func(pc PersonCSV) {
+		*person = append(*person, Person{
+			Name: pc.FirstName + pc.SecondName,
+			Age:  pc.Age,
+			Job:  pc.Job,
+		})
+		// さらに何らかの処理。。。
+	}
+}
+
+func ComplexProcess2(person *[]Person, personCSV PersonCSV) {
+	// pに値を加工して代入するような何らかの複雑な処理
+	*person = append(*person, Person{
+		Name: personCSV.FirstName + personCSV.SecondName,
+		Age:  personCSV.Age,
+		Job:  personCSV.Job,
+	})
 }
